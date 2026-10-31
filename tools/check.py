@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -192,19 +193,34 @@ def check_build() -> None:
     if not (ROOT / script[-1]).is_file():
         record("build: ci script runs", False, f"{script[-1]} missing")
         return
+    started = time.time()
     proc = subprocess.run(script, cwd=ROOT, capture_output=True, text=True, check=False)
     out = proc.stdout + proc.stderr
     tail = " | ".join(out.strip().splitlines()[-3:])
     record("build: ci script exit code 0", proc.returncode == 0, f"exit {proc.returncode}: {tail}")
     record("build: test_BasicAddition passed", re.search(r"test_BasicAddition PASSED", out) is not None)
     exe = ROOT / "dist" / ("hello.exe" if IS_WINDOWS else "hello")
-    record("build: executable dist/hello", exe.is_file(), str(exe.relative_to(ROOT)))
+    fresh = exe.is_file() and exe.stat().st_mtime >= started
+    record("build: executable dist/hello rebuilt", fresh,
+           f"{exe.relative_to(ROOT)} {'is stale' if exe.is_file() else 'missing'}")
     record("build: smoke test", "==> CI OK" in out)
     ignored = git("check-ignore", "build", "dist", ".venv").split()
     record("build: outputs ignored by git", set(ignored) >= {"build", "dist", ".venv"}, " ".join(ignored))
 
 
+def venv_python() -> Path:
+    return ROOT / ".venv" / ("Scripts/python.exe" if IS_WINDOWS else "bin/python")
+
+
 def main() -> int:
+    # The system interpreter may lack PyYAML; re-run inside the project venv if it exists.
+    try:
+        import yaml  # type: ignore  # noqa: F401
+    except ImportError:
+        venv = venv_python()
+        if venv.is_file() and Path(sys.prefix).resolve() != (ROOT / ".venv").resolve():
+            return subprocess.run([str(venv), __file__, *sys.argv[1:]], check=False).returncode
+
     parser = argparse.ArgumentParser(description="Read-only verification for the build-engineer agent.")
     parser.add_argument("--static", action="store_true", help="skip running the build")
     args = parser.parse_args()

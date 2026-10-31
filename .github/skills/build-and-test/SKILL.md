@@ -53,7 +53,8 @@ printing a `==> step` header before each one:
 4. `pip install --upgrade pip` and `pip install -r requirements-dev.txt`
    inside `.venv`.
 5. Run tests: `python -m pytest -v --junitxml=reports/junit.xml`.
-6. Build the executable:
+6. Remove the previous `dist/` (so a stale binary can never pass the
+   checks) and build the executable:
    `python -m PyInstaller --onefile --name hello --paths src --distpath dist --workpath build --specpath build src/hello_app/__main__.py`.
 7. Smoke test: run `dist/hello` (`dist\hello.exe`) and check the output
    contains `Hello, World!`.
