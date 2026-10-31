@@ -1,9 +1,13 @@
 ---
-agent: build-engineer
 description: Create the build system (venv + ci scripts + PyInstaller) and pytest tests using the build-and-test skill.
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(./ci.sh:*), Bash(chmod +x:*), Bash(./dist/hello:*), Bash(test:*), Bash(git check-ignore:*), Bash(.venv/bin/python:*), Bash(grep:*)
+argument-hint: [package=hello_app] [executable=hello]
 ---
 
 # Command: create-build
+
+Act as the **build-engineer** agent and follow every rule of its manifest:
+@.claude/agents/build-engineer.md
 
 ## Preconditions
 
@@ -11,7 +15,7 @@ description: Create the build system (venv + ci scripts + PyInstaller) and pytes
 
 ## Actions
 
-1. Read `.github/skills/build-and-test/SKILL.md`.
+1. Read `.claude/skills/build-and-test/SKILL.md`.
 2. Sub-step **tests**: create `pytest.ini`, `tests/test_core.py`
    (with `test_BasicAddition`), `tests/test_main.py` if missing.
 3. Sub-step **build**: create `requirements-dev.txt`, `ci.sh`, `ci.bat` if

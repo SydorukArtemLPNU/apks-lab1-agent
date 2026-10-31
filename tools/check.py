@@ -12,6 +12,7 @@ ignored directories .venv/, build/, dist/, reports/.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -22,10 +23,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 IS_WINDOWS = os.name == "nt"
 OSES = ["ubuntu-latest", "windows-latest", "macos-latest"]
-COMMANDS = ["git-init", "create-project", "create-build", "create-actions", "check", "init"]
+COMMANDS = ["git-init", "create-project", "create-build", "create-actions", "check", "init-project"]
 INIT_ORDER = COMMANDS[:5]
 SKILLS = ["project-scaffold", "build-and-test", "github-actions"]
-GITIGNORE = [".venv/", "build/", "dist/", "reports/", "__pycache__/", "*.spec"]
+GITIGNORE = [".venv/", "build/", "dist/", "reports/", "__pycache__/", "*.spec", ".claude/settings.local.json"]
 PROJECT_FILES = [
     "src/hello_app/__init__.py",
     "src/hello_app/core.py",
@@ -40,6 +41,7 @@ PROJECT_FILES = [
     "run.sh",
     "run.bat",
     "README.md",
+    "CLAUDE.md",
     "docs/architecture.md",
     "docs/usage.md",
     "docs/ai-log.md",
@@ -77,17 +79,34 @@ def has_sections(text: str, sections: list[str]) -> list[str]:
 
 # --------------------------------------------------------------------------- agent
 def check_manifest() -> None:
-    rel = ".github/agents/build-engineer.agent.md"
+    rel = ".claude/agents/build-engineer.md"
     if not record("agent: manifest exists", (ROOT / rel).is_file(), rel):
         return
     text = read(rel)
     missing = has_sections(text, ["Role", "Area of responsibility", "Forbidden actions", "Definition of done"])
     record("agent: role, limits, done criteria", not missing, ", ".join(missing))
+    record("agent: frontmatter name + tools",
+           text.startswith("---") and "name: build-engineer" in text and "\ntools:" in text)
+
+    claude_md = ROOT / "CLAUDE.md"
+    record("agent: CLAUDE.md imports manifest",
+           claude_md.is_file() and f"@{rel}" in claude_md.read_text(encoding="utf-8"))
+
+    settings = ROOT / ".claude/settings.json"
+    deny: list[str] = []
+    if settings.is_file():
+        try:
+            deny = json.loads(settings.read_text(encoding="utf-8")).get("permissions", {}).get("deny", [])
+        except json.JSONDecodeError:
+            deny = []
+    record("agent: settings deny push/reset/rebase",
+           all(any(rule.startswith(f"Bash({c}") for rule in deny) for c in ("git push", "git reset --hard", "git rebase")),
+           ".claude/settings.json")
 
 
 def check_skills() -> None:
     for skill in SKILLS:
-        rel = f".github/skills/{skill}/SKILL.md"
+        rel = f".claude/skills/{skill}/SKILL.md"
         if not record(f"skill: {skill} exists", (ROOT / rel).is_file(), rel):
             continue
         text = read(rel)
@@ -99,10 +118,13 @@ def check_skills() -> None:
 
 def check_commands() -> None:
     for cmd in COMMANDS:
-        rel = f".github/prompts/{cmd}.prompt.md"
+        rel = f".claude/commands/{cmd}.md"
         ok = (ROOT / rel).is_file() and "description:" in read(rel)
+        if ok and cmd == "check":
+            ok = not re.search(r"^allowed-tools:.*\b(Edit|Write)\b", read(rel), re.M)
+            rel += " (must not allow Edit/Write)" if not ok else ""
         record(f"command: {cmd}", ok, rel)
-    init = ROOT / ".github/prompts/init.prompt.md"
+    init = ROOT / ".claude/commands/init-project.md"
     if init.is_file():
         steps = re.findall(r"^\|\s*\d\s*\|\s*`([a-z-]+)`", init.read_text(encoding="utf-8"), re.M)
         record("command: init order", steps == INIT_ORDER, " -> ".join(steps))

@@ -1,7 +1,7 @@
 ---
 name: build-engineer
 description: Build engineer agent that scaffolds, builds, tests and sets up cross-platform CI for a minimal Python "Hello World" project (venv + run script + pytest + PyInstaller).
-tools: ['edit', 'runCommands', 'search', 'problems', 'changes']
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill
 ---
 
 # Build Engineer Agent
@@ -38,30 +38,38 @@ You MAY create or update only these paths:
 - `.github/workflows/ci.yml`
 - `.gitignore`, `README.md`, `docs/usage.md`, `docs/ai-log.md`
 
-Files of the agent itself (`.github/agents/`, `.github/prompts/`,
-`.github/skills/`, `tools/check.py`, `docs/architecture.md`) are changed
+Files of the agent itself (`.claude/agents/`, `.claude/commands/`,
+`.claude/skills/`, `.claude/settings.json`, `CLAUDE.md`, `tools/check.py`,
+`docs/architecture.md`) are changed
 **only** when the user explicitly asks to fix the agent.
 
 ## Skills
 
 | Skill              | File                                       | Used by command   |
 |--------------------|--------------------------------------------|-------------------|
-| project-scaffold   | `.github/skills/project-scaffold/SKILL.md` | `create-project`  |
-| build-and-test     | `.github/skills/build-and-test/SKILL.md`   | `create-build`    |
-| github-actions     | `.github/skills/github-actions/SKILL.md`   | `create-actions`  |
+| project-scaffold   | `.claude/skills/project-scaffold/SKILL.md` | `create-project`  |
+| build-and-test     | `.claude/skills/build-and-test/SKILL.md`   | `create-build`    |
+| github-actions     | `.claude/skills/github-actions/SKILL.md`   | `create-actions`  |
 
-Before executing a command, read the skill it refers to and follow it exactly.
+Before executing a command, load the skill it refers to (Skill tool, or read
+its `SKILL.md`) and follow it exactly.
+
+In Claude Code the commands are slash commands (`/git-init`, `/check`, …);
+`/init` is a built-in Claude Code command, so the orchestrator is
+`/init-project`. The same manifest is also available as the subagent
+`build-engineer` (`.claude/agents/`), and `CLAUDE.md` imports it so every
+session in this repository follows these rules.
 
 ## Commands
 
 | Command          | File                                         | Changes files? |
 |------------------|----------------------------------------------|----------------|
-| `git-init`       | `.github/prompts/git-init.prompt.md`         | `.gitignore` only |
-| `create-project` | `.github/prompts/create-project.prompt.md`   | yes |
-| `create-build`   | `.github/prompts/create-build.prompt.md`     | yes |
-| `create-actions` | `.github/prompts/create-actions.prompt.md`   | yes |
-| `check`          | `.github/prompts/check.prompt.md`            | **no** |
-| `init`           | `.github/prompts/init.prompt.md` (orchestrator) | yes |
+| `git-init`       | `.claude/commands/git-init.md`         | `.gitignore` only |
+| `create-project` | `.claude/commands/create-project.md`   | yes |
+| `create-build`   | `.claude/commands/create-build.md`     | yes |
+| `create-actions` | `.claude/commands/create-actions.md`   | yes |
+| `check`          | `.claude/commands/check.md`            | **no** |
+| `init-project`   | `.claude/commands/init-project.md` (orchestrator) | yes |
 
 ## Working rules
 

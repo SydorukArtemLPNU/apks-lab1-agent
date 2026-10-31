@@ -1,9 +1,13 @@
 ---
-agent: build-engineer
 description: Create the cross-platform GitHub Actions workflow using the github-actions skill.
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(python3:*), Bash(python:*), Bash(.venv/bin/python:*), Bash(grep:*)
+argument-hint: [branches=develop,master] [python_version=3.12]
 ---
 
 # Command: create-actions
+
+Act as the **build-engineer** agent and follow every rule of its manifest:
+@.claude/agents/build-engineer.md
 
 ## Preconditions
 
@@ -11,7 +15,7 @@ description: Create the cross-platform GitHub Actions workflow using the github-
 
 ## Actions
 
-1. Read `.github/skills/github-actions/SKILL.md`.
+1. Read `.claude/skills/github-actions/SKILL.md`.
 2. Create `.github/workflows/ci.yml` if missing. If it exists, make sure it
    matches the skill (one job, three OSes, only script calls) and fix only the
    differences — never add a second job or duplicate steps.

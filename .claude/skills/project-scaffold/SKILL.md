@@ -66,6 +66,7 @@ __pycache__/
 .DS_Store
 .vscode/
 .env
+.claude/settings.local.json
 ```
 
 ## Verification

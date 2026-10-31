@@ -1,11 +1,15 @@
 ---
-agent: build-engineer
 description: Create the initial Python Hello World project using the project-scaffold skill.
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(python3:*), Bash(python:*), Bash(PYTHONPATH=src python3:*), Bash(chmod +x:*), Bash(./run.sh:*), Bash(test:*), Bash(grep:*)
+argument-hint: [project_name=hello] [package=hello_app]
 ---
 
 # Command: create-project
 
-Arguments (optional): `${input:project_name:hello}`, `${input:package:hello_app}`.
+Act as the **build-engineer** agent and follow every rule of its manifest:
+@.claude/agents/build-engineer.md
+
+Arguments (optional): `$ARGUMENTS` — `key=value` pairs overriding the skill inputs (`project_name=hello package=hello_app`).
 
 ## Preconditions
 
@@ -14,7 +18,7 @@ Arguments (optional): `${input:project_name:hello}`, `${input:package:hello_app}
 
 ## Actions
 
-1. Read `.github/skills/project-scaffold/SKILL.md`.
+1. Read `.claude/skills/project-scaffold/SKILL.md`.
 2. Create every output file of the skill that does not exist yet. For
    existing files: compare with the skill requirements and change only what
    is missing or wrong.

@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./ci.sh)",
+      "Bash(./run.sh:*)",
+      "Bash(./dist/hello:*)",
+      "Bash(python3 tools/check.py:*)",
+      "Bash(git status:*)",
+      "Bash(git branch:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git rev-parse:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git rebase:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git clean:*)",
+      "Bash(rm -rf /:*)",
+      "Bash(rm -rf ~:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh secret:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(~/.ssh/**)"
+    ]
+  }
+}
