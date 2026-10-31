@@ -1,0 +1,1 @@
+# Runtime dependencies of hello_app: none (standard library only).
