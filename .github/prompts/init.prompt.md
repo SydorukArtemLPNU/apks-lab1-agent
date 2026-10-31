@@ -1,0 +1,42 @@
+---
+agent: build-engineer
+description: Orchestrator — runs git-init, create-project, create-build, create-actions and check in order, stopping on the first error.
+---
+
+# Command: init (orchestrator)
+
+Runs the full scenario. Safe to run again on an existing project: every
+command is idempotent and only adds what is missing.
+
+## Preconditions
+
+- Repository root with `.github/agents/build-engineer.agent.md`.
+- `git` and Python ≥ 3.10 installed. If not — stop with
+  `init: missing prerequisite <tool>`.
+
+## Steps
+
+Execute the commands **in this exact order**. For each step: read its prompt
+file, perform it, run its verification, and print
+`[init] step N/5 <command>: OK` or `[init] step N/5 <command>: FAILED`.
+
+| # | Command          | Prompt file                                  | Passes to next step |
+|---|------------------|----------------------------------------------|---------------------|
+| 1 | `git-init`       | `.github/prompts/git-init.prompt.md`         | repo + `.gitignore` |
+| 2 | `create-project` | `.github/prompts/create-project.prompt.md`   | `src/hello_app`, run scripts |
+| 3 | `create-build`   | `.github/prompts/create-build.prompt.md`     | `ci.sh`/`ci.bat`, tests, `dist/hello` |
+| 4 | `create-actions` | `.github/prompts/create-actions.prompt.md`   | `.github/workflows/ci.yml` |
+| 5 | `check`          | `.github/prompts/check.prompt.md`            | final report |
+
+## Error handling
+
+- If a step fails, **stop immediately**, do not run the following steps,
+  print the failing step, the command output and a suggested fix.
+- Never mark the run successful unless step 5 (`check`) exits with code 0.
+
+## Final report
+
+Print a table: step, status, created/changed files. Then list the next manual
+actions for the user: review the diff, commit (agent / project / CI as
+separate commits), push the `feature/...` branch, open a PR to `develop`.
+Append a summary entry to `docs/ai-log.md`.
