@@ -55,3 +55,16 @@ docs/architecture.md                      # архітектура агента
 оркестратор називається `/init-project`.
 
 Детальніше — [docs/architecture.md](docs/architecture.md).
+
+## Project
+
+Застосунок `hello_app` (пакет у `src/hello_app/`) друкує привітання.
+
+| Дія | Linux / macOS | Windows |
+|-----|---------------|---------|
+| Запуск з вихідних кодів | `./run.sh` → `Hello, World!` | `run.bat` |
+| Запуск з аргументом | `./run.sh --name Lab` → `Hello, Lab!` | `run.bat --name Lab` |
+| Збірка + тести + exe | `./ci.sh` → `dist/hello` | `ci.bat` → `dist\hello.exe` |
+
+Скрипти самі створюють `.venv` (лише локально, без глобальних пакетів).
+Детальна інструкція — [docs/usage.md](docs/usage.md).
