@@ -5,3 +5,4 @@
 
 | Дата | Інструмент | Запит / команда | Результат | Помилки та рішення |
 |------|------------|-----------------|-----------|--------------------|
+| 2026-10-31 | Claude Code | Перенести агента з формату GitHub Copilot на Claude Code (викладач дозволив будь-який AI-клієнт) | `.github/{agents,prompts,skills}` → `.claude/{agents,commands,skills}`, `CLAUDE.md`, `.claude/settings.json` (deny push/reset/rebase), `tools/check.py` під нові шляхи | `/init` — вбудована команда Claude Code → оркестратор перейменовано на `/init-project` |

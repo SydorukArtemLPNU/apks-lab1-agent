@@ -9,18 +9,35 @@
 commands, виконує їх у фіксованому порядку і **не вважає роботу завершеною
 без автоматичної перевірки** (`tools/check.py`).
 
-## Відповідність файлів ролям (GitHub Copilot, VS Code)
+## Відповідність файлів ролям (Claude Code)
 
-| Роль з методички   | Файл у репозиторії                         | Формат Copilot |
-|--------------------|--------------------------------------------|----------------|
-| Agent manifest     | `.github/agents/build-engineer.agent.md`   | custom agent (`*.agent.md`) |
-| Skill              | `.github/skills/<name>/SKILL.md`           | agent skill (`SKILL.md` з frontmatter `name`, `description`) |
-| Command            | `.github/prompts/<name>.prompt.md`         | prompt file, викликається як `/<name>` у чаті |
-| Orchestrator       | `.github/prompts/init.prompt.md`           | prompt file `/init` |
-| Детермінована перевірка | `tools/check.py`                      | Python-скрипт, викликається командою `check` |
+Методичка описує агента у форматі GitHub Copilot. Агент виконано для
+**Claude Code** (дозволено використовувати будь-який AI-клієнт), тому
+каталоги інші. Відповідність:
 
-Кожен prompt має `agent: build-engineer` у frontmatter, тому команда завжди
-виконується з правилами та обмеженнями manifest.
+| Роль з методички        | Файл у репозиторії                      | Формат Claude Code |
+|-------------------------|-----------------------------------------|--------------------|
+| Agent manifest          | `.claude/agents/build-engineer.md`      | subagent (frontmatter `name`, `description`, `tools`) |
+| Підключення manifest    | `CLAUDE.md` (`@.claude/agents/build-engineer.md`) | project memory, завантажується в кожну сесію |
+| Skill                   | `.claude/skills/<name>/SKILL.md`        | agent skill (frontmatter `name`, `description`) |
+| Command                 | `.claude/commands/<name>.md`            | slash-команда `/<name>` (frontmatter `description`, `allowed-tools`, `argument-hint`) |
+| Orchestrator            | `.claude/commands/init-project.md`      | `/init-project` (`/init` зайнята вбудованою командою) |
+| Обмеження (forbidden)   | `.claude/settings.json`                 | `permissions.deny`: `git push`, `git reset --hard`, `git rebase`, `git clean`, читання `.env` |
+| Детермінована перевірка | `tools/check.py`                        | Python-скрипт, викликається командою `/check` |
+
+| Copilot (методичка)               | Claude Code (цей репозиторій)   |
+|-----------------------------------|---------------------------------|
+| `.github/agents/*.agent.md`       | `.claude/agents/*.md`           |
+| `.github/prompts/*.prompt.md`     | `.claude/commands/*.md`         |
+| `.github/skills/*/SKILL.md`       | `.claude/skills/*/SKILL.md`     |
+| `agent: build-engineer` у prompt  | `@.claude/agents/build-engineer.md` у тілі команди + `CLAUDE.md` |
+| `tools:` у frontmatter            | `allowed-tools:` у frontmatter команди |
+
+Кожна команда починається з посилання `@.claude/agents/build-engineer.md`,
+тому виконується з правилами та обмеженнями manifest. `allowed-tools`
+визначає, які інструменти команда використовує без додаткового запиту;
+у `/check` немає `Edit`/`Write`, тож спроба змінити файл потребувала б
+явного дозволу користувача (це також перевіряє `tools/check.py`).
 
 ## Skills
 
@@ -39,7 +56,7 @@ commands, виконує їх у фіксованому порядку і **не
 | `create-build`   | `build-and-test`   | так | створює складання і тести, запускає `ci.sh` |
 | `create-actions` | `github-actions`   | так | створює CI workflow |
 | `check`          | —                  | **ні** | запускає `tools/check.py` |
-| `init`           | усі                | так | оркестратор |
+| `init-project`   | усі                | так | оркестратор |
 
 ## Потік даних між етапами
 
@@ -50,6 +67,7 @@ flowchart LR
     C -->|ci.sh / ci.bat, tests, dist/hello| D[create-actions]
     D -->|.github/workflows/ci.yml| E[check]
     E -->|PASS/FAIL table, exit code| F((report))
+    O[/init-project/] ==> A
     B -.reads.-> S1[[project-scaffold]]
     C -.reads.-> S2[[build-and-test]]
     D -.reads.-> S3[[github-actions]]
@@ -63,10 +81,10 @@ flowchart LR
 ## Обробка помилок оркестратором
 
 1. Після кожного кроку виконується його блок *Verification*.
-2. При помилці `init` друкує `[init] step N/5 <command>: FAILED`, вихід
+2. При помилці `/init-project` друкує `[init-project] step N/5 <command>: FAILED`, вихід
    команди та пропозицію виправлення і **не запускає наступні кроки**.
 3. Успіх оголошується лише якщо `check` (`tools/check.py`) повернув код 0.
-4. Повторний запуск `init` безпечний: кожна команда створює лише відсутні
+4. Повторний запуск `/init-project` безпечний: кожна команда створює лише відсутні
    файли й не дублює рядки `.gitignore` чи job-и workflow (це також
    перевіряє `check`: дублікати в `.gitignore`, рівно один job).
 
